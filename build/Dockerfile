@@ -1,5 +1,7 @@
 FROM ubuntu:16.04
 
+MAINTAINER Anatolie Marinescu <toleanus@gmail.com>
+
 ENV DEBIAN_FRONTEND noninteractive
 ENV TERM xterm
 
