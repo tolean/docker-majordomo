@@ -7,8 +7,6 @@ RUN apt-get update
 
 RUN apt-get -y install apt-utils wget
 
-RUN apt-get -y install mysql-server mysql-client
-
 # apache
 RUN apt-get -y install apache2 apache2-utils
 ADD apache2.conf /etc/apache2/sites-available/000-default.conf
@@ -26,17 +24,22 @@ ADD php.ini /etc/php/5.6/cli/conf.d/10-majordomo.ini
 RUN a2enmod rewrite
 
 # install majordomo
-RUN echo "as-a"
-RUN wget http://majordomo.smartliving.ru/download/_majordomo_linux_100b.tar.gz -O /tmp/majordomo.tar.gz
+RUN wget --progress=bar:force http://majordomo.smartliving.ru/download/_majordomo_linux_100b.tar.gz -O /tmp/majordomo.tar.gz
 RUN mkdir /tmp/majordomo
-RUN tar xvfz /tmp/majordomo.tar.gz -C /tmp/majordomo
+RUN tar xfz /tmp/majordomo.tar.gz -C /tmp/majordomo
 RUN rm -rf /var/www
 RUN mv /tmp/majordomo/html /var/www
-#RUN rm -rf /tmp/majordomo*
 
 RUN chown -R www-data:www-data /var/www
 RUN usermod -a -G audio www-data
 
 # configure database
-RUN echo "mysql ----  "
-RUN service mysql start && mysql -e "CREATE DATABASE db_terminal /*\!40100 DEFAULT CHARACTER SET utf8 */;"
+RUN apt-get -y install mysql-server mysql-client
+
+RUN service mysql start && \
+    mysql -e "CREATE DATABASE db_terminal /*\!40100 DEFAULT CHARACTER SET utf8 */;" && \
+    mysql db_terminal < /tmp/majordomo/db_terminal.sql
+
+RUN rm -rf /tmp/majordomo*
+
+# TODO change mysql user & password in /var/www/config.php
