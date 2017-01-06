@@ -7,7 +7,7 @@ ENV TERM xterm
 
 RUN apt-get update
 
-RUN apt-get -y install apt-utils wget
+RUN apt-get -y install apt-utils
 
 # apache
 RUN apt-get -y install apache2 apache2-utils
@@ -20,28 +20,21 @@ RUN apt-get update
 RUN apt-get -y install php5.6-cgi php5.6-cli php5.6 php5.6-xcache # php-pear
 RUN apt-get -y install curl libcurl3 libcurl3-dev php5.6-curl
 RUN apt-get -y install libapache2-mod-php5.6
+RUN apt-get -y install php5.6-mysql
+RUN apt-get -y install php5.6-mbstring
 ADD php.ini /etc/php/5.6/apache2/conf.d/10-majordomo.ini
 ADD php.ini /etc/php/5.6/cli/conf.d/10-majordomo.ini
 
 RUN a2enmod rewrite
 
-# install majordomo
-RUN wget --progress=bar:force http://majordomo.smartliving.ru/download/_majordomo_linux_100b.tar.gz -O /tmp/majordomo.tar.gz
-RUN mkdir /tmp/majordomo
-RUN tar xfz /tmp/majordomo.tar.gz -C /tmp/majordomo
-RUN rm -rf /var/www
-RUN mv /tmp/majordomo/html /var/www
+# TODO refactor
+#RUN chown -R www-data:www-data /var/www
+#RUN usermod -a -G audio www-data
 
-RUN chown -R www-data:www-data /var/www
-RUN usermod -a -G audio www-data
+# supervisord
+RUN apt-get -y install supervisor
+ADD supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 
-# configure database
-RUN apt-get -y install mysql-server mysql-client
-
-RUN service mysql start && \
-    mysql -e "CREATE DATABASE db_terminal /*\!40100 DEFAULT CHARACTER SET utf8 */;" && \
-    mysql db_terminal < /tmp/majordomo/db_terminal.sql
-
-RUN rm -rf /tmp/majordomo*
-
-# TODO change mysql user & password in /var/www/config.php
+VOLUME ["/var/www"]
+EXPOSE 80
+CMD ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
